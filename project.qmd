@@ -1,13 +1,10 @@
 ---
 title: "Analyzing MLB Swing Outcomes with Statcast Pitch-by-Pitch Data"
 subtitle: "How Bat Speed, Launch Angle, and Pitch Characteristics Drive Offensive Production"
-author: "Ethan Katz"
-date: today
 format:
   html:
     theme: flatly
-    toc: true
-    toc-title: "Project Sections"
+    toc: false
     title-block-banner: "#1d3557"
     title-block-banner-color: "#f1faee"
     smooth-scroll: true
@@ -19,6 +16,22 @@ execute:
 
 ```{=html}
 <style>
+.nav-tabs {
+  margin-top: 0.75rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #dee2e6;
+}
+.nav-tabs .nav-link {
+  font-weight: 600;
+  color: #1d3557;
+  font-size: 1.05rem;
+  padding: 0.55rem 1.15rem;
+}
+.nav-tabs .nav-link.active {
+  color: #e63946;
+  border-bottom: 3px solid #e63946;
+  font-weight: 700;
+}
 h2 {
   border-bottom: 3px solid #e63946;
   padding-bottom: 0.35rem;
@@ -105,57 +118,208 @@ h2 {
   background-color: #ffffff;
   border-left: 5px solid #BD9B60;
 }
+.savant-viz-wrapper {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  background-color: #041e42;
+  border: 2px solid #1d3557;
+  border-radius: 0.45rem;
+  overflow: hidden;
+  margin-top: 0.75rem;
+  box-shadow: 0 4px 12px rgba(4, 30, 66, 0.18);
+}
+.savant-video-stage {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #041e42;
+  cursor: pointer;
+}
+.savant-video-stage video {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.savant-right-hotspots {
+  position: absolute;
+  top: 0;
+  left: 81.25%;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+.savant-hotspot {
+  flex: 1;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.savant-hotspot:hover {
+  background: rgba(57, 144, 152, 0.18);
+}
+.savant-controls-bar {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  background-color: #041e42;
+  border-top: 1px solid rgba(139, 151, 168, 0.35);
+  color: #ffffff;
+  font-size: 0.85rem;
+}
+.savant-btn-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.savant-btn {
+  background-color: #1d3455;
+  color: #ffffff;
+  border: 1px solid #8b97a8;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.savant-btn:hover, .savant-btn.active-side {
+  background-color: #399098;
+  border-color: #ffffff;
+}
+.savant-scrub {
+  flex: 1;
+  min-width: 120px;
+  accent-color: #399098;
+  cursor: pointer;
+}
+/* Animated Pitch Swing Path Carousel */
+.pitch-anim-container {
+  background: #ffffff;
+  border: 2px solid #1d3557;
+  border-radius: 8px;
+  padding: 1rem 1.15rem 0.85rem 1.15rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 14px rgba(29, 53, 87, 0.08);
+}
+.pitch-anim-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+.pitch-anim-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1d3557;
+}
+.pitch-anim-pulsing-dot {
+  width: 10px;
+  height: 10px;
+  background-color: #e63946;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 0 rgba(230, 57, 70, 0.4);
+  animation: pitchPulse 1.6s infinite;
+}
+@keyframes pitchPulse {
+  0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(230, 57, 70, 0); }
+  100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); }
+}
+.pitch-anim-pills {
+  display: flex;
+  gap: 0.35rem;
+}
+.pitch-pill {
+  border: 1px solid #1d3557;
+  background-color: #f1faee;
+  color: #1d3557;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.pitch-pill:hover {
+  background-color: #e2ece9;
+}
+.pitch-pill.active {
+  background-color: #1d3557;
+  color: #ffffff;
+}
+.pitch-anim-stage {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  width: 100%;
+  background-color: #ffffff;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.pitch-slide {
+  grid-column: 1;
+  grid-row: 1;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+  pointer-events: none;
+}
+.pitch-slide.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.pitch-slide img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.pitch-progress-track {
+  width: 100%;
+  height: 4px;
+  background-color: #e9ecef;
+  border-radius: 2px;
+  margin-top: 0.65rem;
+  overflow: hidden;
+}
+.pitch-progress-bar {
+  height: 100%;
+  width: 0%;
+  background-color: #e63946;
+  transition: width 0.08s linear;
+}
+.pitch-anim-caption {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 0.4rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 </style>
 ```
 
 ```{r}
+#| message: false
+#| warning: false
+
 library(tidyverse)
-```
-
-## ⚾ Introduction & Project Plans
-
-Modern Major League Baseball analytics has been transformed by Hawk-Eye optical tracking and Statcast data provided through **Baseball Savant**. Every pitch and swing in an MLB ballpark is measured at high resolution, capturing both how a pitcher delivers the ball and how the batter's swing interacts with it at contact. The goal of this project is to analyze pitch-by-pitch Statcast tracking data to understand how swing mechanics and pitch characteristics jointly determine batted-ball outcomes.
-
-In this project, I plan to examine how batter swing decisions and contact quality translate into offensive production—specifically distinguishing between outs, singles, extra-base hits (doubles and triples), and home runs. By combining pitch-level variables with swing-tracking metrics, I will explore which combinations of bat speed, launch angle, and exit velocity consistently produce high-value outcomes ("barrels") and how different pitch types disrupt a hitter's ability to square up the baseball.
-
-::: {.callout-important}
-### Core Research Question
-How do **bat speed** and **pitch type** interact to shape a hitter's **exit velocity** and **launch angle**, and what combinations maximize the probability of extra-base hits and home runs?
-:::
-
----
-
-## 📊 Data & Key Variables
-
-The data for this analysis comes from **MLB Statcast** via Baseball Savant, where each observation represents an individual pitch put into play. Below is a summary of the five core variables I will use to model and explain swing outcomes:
-
-| Variable | Statcast Column | Units / Categories | Role in Analysis |
-|:---|:---|:---|:---|
-| **Exit Velocity** | `launch_speed` | mph ($60\text{--}118\text{ mph}$) | Measures raw contact hardness off the bat |
-| **Launch Angle** | `launch_angle` | Degrees ($-45^\circ\text{ to }75^\circ$) | Determines trajectory (grounder, liner, fly ball) |
-| **Bat Speed** | `bat_speed` | mph ($60\text{--}85\text{ mph}$) | Captures batter swing effort at the sweet spot |
-| **Pitch Type** | `pitch_type` | Fastball, Slider, Changeup, Curveball | Accounts for movement profile and deception |
-| **Release Velocity** | `release_speed` | mph ($75\text{--}102\text{ mph}$) | Measures incoming pitch speed out of the hand |
-
-::: {.stat-card}
-**Why These Variables Matter Together:**
-
-- **Exit Velocity (`launch_speed`) & Launch Angle (`launch_angle`):** Higher exit velocities give fielders less time to react and carry the ball farther, but hard contact hit straight into the ground ($< 5^\circ$) often results in an out. Pairing $98+\text{ mph}$ exit velocity with an optimal launch angle ($24^\circ\text{--}38^\circ$) defines the **Barrel Zone**, where home runs are most frequent.
-- **Bat Speed (`bat_speed`):** Introduced in recent Statcast tracking, bat speed separates a batter's raw swing effort from point-of-contact quality.
-- **Pitch Type (`pitch_type`) & Release Velocity (`release_speed`):** Fastballs provide incoming kinetic energy that can boost exit velocity when squared up, whereas breaking and offspeed pitches disrupt timing and induce weaker launch angles.
-:::
-
----
-
-## 📈 League-Wide Data Visualization
-
-::: {.callout-tip appearance="minimal"}
-**Reading the Chart:** Each point below represents a batted ball in play. Notice how **Home Runs** (red) cluster tightly inside the shaded **Barrel Zone**, while **Singles** (teal) form a low-trajectory line-drive band between $5^\circ$ and $22^\circ$.
-:::
-
-```{r}
-#| fig-width: 8.5
-#| fig-height: 5.75
 
 statcast_raw <- read_csv("statcast_2025.csv", show_col_types = FALSE)
 
@@ -177,7 +341,14 @@ statcast_bip <- statcast_raw |>
     outcome = factor(
       outcome,
       levels = c("Home Run", "Extra-Base Hit (2B/3B)", "Single", "In-Play Out")
-    )
+    ),
+    pitch_cat = case_when(
+      pitch_type %in% c("FF", "SI", "FC") ~ "Fastballs",
+      pitch_type %in% c("SL", "ST", "CU", "KC", "SV", "CS") ~ "Breaking Balls",
+      pitch_type %in% c("CH", "FS", "FO") ~ "Offspeed",
+      TRUE ~ "Other"
+    ),
+    pitch_cat = factor(pitch_cat, levels = c("Fastballs", "Breaking Balls", "Offspeed"))
   )
 
 outcome_colors <- c(
@@ -186,6 +357,211 @@ outcome_colors <- c(
   "Single" = "#2a9d8f",
   "In-Play Out" = "#adb5bd"
 )
+```
+
+::::::: {.panel-tabset}
+
+## ⚾ Introduction
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| results: asis
+
+make_pitch_plot <- function(data, category_name, sub_text) {
+  p_data <- data |> filter(pitch_cat == category_name)
+  n_bip <- nrow(p_data)
+  n_hr <- sum(p_data$outcome == "Home Run")
+  
+  p <- ggplot(p_data, aes(x = attack_angle, y = launch_angle, color = outcome)) +
+    annotate(
+      "rect",
+      xmin = 8, xmax = 18, ymin = 20, ymax = 38,
+      fill = "#e63946", alpha = 0.12, color = "#e63946", linetype = "dashed", linewidth = 0.6
+    ) +
+    annotate(
+      "label",
+      x = 13, y = 29,
+      label = "Optimal Barrel Window\n(8°–18° Attack Angle)",
+      size = 3.0, fontface = "bold", color = "#1d3557", fill = "#f1faee"
+    ) +
+    geom_hline(yintercept = c(10, 25), linetype = "dotted", color = "gray55") +
+    geom_point(alpha = 0.72, size = 2.1) +
+    geom_smooth(method = "lm", se = FALSE, color = "#1d3557", linewidth = 0.95) +
+    scale_color_manual(values = outcome_colors) +
+    scale_x_continuous(limits = c(-15, 30), breaks = seq(-10, 30, by = 10), labels = \(x) paste0(x, "°")) +
+    scale_y_continuous(limits = c(-40, 70), breaks = seq(-30, 60, by = 30), labels = \(x) paste0(x, "°")) +
+    labs(
+      title = paste0("Bat Swing Path on ", category_name, " (", n_bip, " Balls in Play, ", n_hr, " Home Runs)"),
+      subtitle = sub_text,
+      x = "Bat Swing Path Attack Angle (degrees)",
+      y = "Batted-Ball Launch Angle (degrees)",
+      color = "Batted-Ball Outcome",
+      caption = "Data: 2025 MLB Statcast via Baseball Savant | Hawk-Eye Bat Tracking"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(
+      plot.title = element_text(face = "bold", size = 13.5, color = "#1d3557"),
+      plot.subtitle = element_text(color = "gray30", size = 10, margin = margin(b = 8)),
+      plot.caption = element_text(color = "gray45", size = 8.5, margin = margin(t = 6)),
+      axis.title = element_text(face = "bold", color = "#1d3557", size = 10.5),
+      legend.position = "top",
+      legend.title = element_text(face = "bold", color = "#1d3557", size = 9.5),
+      legend.text = element_text(size = 8.5),
+      panel.grid.minor = element_blank(),
+      panel.border = element_rect(color = "gray85", fill = NA, linewidth = 0.8)
+    )
+  
+  tf <- tempfile(fileext = ".png")
+  ggsave(tf, p, width = 8.5, height = 4.8, dpi = 130)
+  knitr::image_uri(tf)
+}
+
+clean_bip <- statcast_bip |>
+  filter(!is.na(attack_angle), !is.na(launch_angle), !is.na(pitch_cat), pitch_cat != "Other") |>
+  filter(attack_angle >= -15, attack_angle <= 30, launch_angle >= -40, launch_angle <= 70)
+
+uri_fast <- make_pitch_plot(clean_bip, "Fastballs", "High incoming velocity meets bat path: tightest launch angle clustering and highest home run ceiling.")
+uri_break <- make_pitch_plot(clean_bip, "Breaking Balls", "Downward break disrupts attack angle alignment: induces more miss-hits and off-barrel contact.")
+uri_off <- make_pitch_plot(clean_bip, "Offspeed", "Deceptive deceleration challenges timing: batters swing out in front, flattening their path.")
+
+html_out <- paste0(
+'<div class="pitch-anim-container">
+<div class="pitch-anim-header">
+<div class="pitch-anim-badge">
+<span class="pitch-anim-pulsing-dot"></span>
+<span>Live Pitch Type Cycle: <strong id="pitch-active-label" style="color: #e63946;">Fastballs</strong></span>
+</div>
+<div class="pitch-anim-pills">
+<button class="pitch-pill active" id="pill-0" onclick="selectPitchSlide(0)">Fastballs</button>
+<button class="pitch-pill" id="pill-1" onclick="selectPitchSlide(1)">Breaking Balls</button>
+<button class="pitch-pill" id="pill-2" onclick="selectPitchSlide(2)">Offspeed</button>
+</div>
+</div>
+<div class="pitch-anim-stage">
+<div class="pitch-slide active" id="pitch-slide-0">
+<img src="', uri_fast, '" alt="Bat Swing Path on Fastballs" />
+</div>
+<div class="pitch-slide" id="pitch-slide-1">
+<img src="', uri_break, '" alt="Bat Swing Path on Breaking Balls" />
+</div>
+<div class="pitch-slide" id="pitch-slide-2">
+<img src="', uri_off, '" alt="Bat Swing Path on Offspeed Pitches" />
+</div>
+</div>
+<div class="pitch-progress-track">
+<div class="pitch-progress-bar" id="pitch-progress-fill"></div>
+</div>
+<div class="pitch-anim-caption">
+<span>Data automatically cycles pitch types every 6 seconds. Click any button above to pause on a specific pitch type.</span>
+<span><strong>Statcast 2025</strong></span>
+</div>
+</div>
+
+<script>
+(function() {
+var currentPitchIdx = 0;
+var totalPitchSlides = 3;
+var slideIntervalMs = 6000;
+var pitchTimerId = null;
+var progressTimerId = null;
+var progressStart = Date.now();
+
+function updatePitchSlide(index) {
+currentPitchIdx = index;
+var slides = [document.getElementById("pitch-slide-0"), document.getElementById("pitch-slide-1"), document.getElementById("pitch-slide-2")];
+var pills = [document.getElementById("pill-0"), document.getElementById("pill-1"), document.getElementById("pill-2")];
+var label = document.getElementById("pitch-active-label");
+var names = ["Fastballs", "Breaking Balls", "Offspeed"];
+
+for (var i = 0; i < totalPitchSlides; i++) {
+if (slides[i]) slides[i].classList.toggle("active", i === index);
+if (pills[i]) pills[i].classList.toggle("active", i === index);
+}
+if (label) label.textContent = names[index];
+progressStart = Date.now();
+}
+
+function nextPitchSlide() {
+updatePitchSlide((currentPitchIdx + 1) % totalPitchSlides);
+}
+
+function startCycle() {
+if (pitchTimerId) clearInterval(pitchTimerId);
+if (progressTimerId) clearInterval(progressTimerId);
+
+progressStart = Date.now();
+pitchTimerId = setInterval(nextPitchSlide, slideIntervalMs);
+
+progressTimerId = setInterval(function() {
+var elapsed = Date.now() - progressStart;
+var pct = Math.min(100, (elapsed / slideIntervalMs) * 100);
+var bar = document.getElementById("pitch-progress-fill");
+if (bar) bar.style.width = pct + "%";
+}, 60);
+}
+
+window.selectPitchSlide = function(index) {
+updatePitchSlide(index);
+startCycle();
+};
+
+if (document.readyState === "complete" || document.readyState === "interactive") {
+startCycle();
+} else {
+document.addEventListener("DOMContentLoaded", startCycle);
+}
+})();
+</script>'
+)
+
+cat(knitr::raw_html(html_out))
+```
+
+Modern Major League Baseball analytics has been revolutionized by Hawk-Eye optical tracking and bat-sensor Statcast data provided through **Baseball Savant**. While traditional metrics focused solely on pitch velocity and movement, newly available swing-tracking technology captures the 3D trajectory of the bat barrel through the hitting zone. **This project is specifically focused on how a hitter's bat swing path—in particular, their vertical attack angle and swing plane through the zone—shapes contact quality and dictates batted-ball outcomes.**
+
+A hitter's swing path is the fundamental blueprint for ball flight. A swing path that is too steep or too flat frequently leads to rolled-over ground balls or weak pop-ups. Conversely, an optimized bat path that closely mirrors the downward approach angle of incoming pitches creates a wider window of square contact, driving balls into the line-drive and high-value "barrel" zones. In this project, I examine how bat swing path metrics interact with pitch characteristics to produce outs, singles, extra-base hits, and home runs across elite MLB batters.
+
+::: {.callout-important}
+### Core Research Question
+How does a hitter's **bat swing path** (specifically their vertical attack angle) interact with pitch type to shape **launch angle** and **exit velocity**, and what swing paths consistently maximize extra-base hits and home runs?
+:::
+
+## 📊 Data & Variables
+
+The data for this analysis comes from **MLB Statcast** via Baseball Savant, where each observation represents an individual pitch put into play. Below is a summary of the core variables I use to model and explain swing outcomes:
+
+| Variable | Statcast Column | Units / Categories | Role in Analysis |
+|:---|:---|:---|:---|
+| **Attack Angle (Bat Path)** | `attack_angle` | Degrees ($-15^\circ\text{ to }30^\circ$) | Vertical path of the bat barrel at contact |
+| **Exit Velocity** | `launch_speed` | mph ($60\text{--}118\text{ mph}$) | Measures raw contact hardness off the bat |
+| **Launch Angle** | `launch_angle` | Degrees ($-45^\circ\text{ to }75^\circ$) | Determines trajectory (grounder, liner, fly ball) |
+| **Bat Speed** | `bat_speed` | mph ($60\text{--}85\text{ mph}$) | Captures batter swing effort at the sweet spot |
+| **Pitch Type** | `pitch_type` | Fastball, Slider, Changeup, Curveball | Accounts for movement profile and deception |
+| **Release Velocity** | `release_speed` | mph ($75\text{--}102\text{ mph}$) | Measures incoming pitch speed out of the hand |
+
+::: {.stat-card}
+**Why These Variables Matter Together:**
+
+- **Bat Path Attack Angle (`attack_angle`):** Dictates how cleanly the barrel plane matches the downward flight of the pitch. An upward path of $8^\circ\text{--}18^\circ$ maximizes line-drive and extra-base hit launch angles.
+- **Exit Velocity (`launch_speed`) & Launch Angle (`launch_angle`):** Higher exit velocities give fielders less time to react and carry the ball farther, but hard contact hit straight into the ground ($< 5^\circ$) often results in an out. Pairing $98+\text{ mph}$ exit velocity with an optimal launch angle ($24^\circ\text{--}38^\circ$) defines the **Barrel Zone**, where home runs are most frequent.
+- **Bat Speed (`bat_speed`):** Introduced in recent Statcast tracking, bat speed separates a batter's raw swing effort from point-of-contact quality.
+- **Pitch Type (`pitch_type`) & Release Velocity (`release_speed`):** Fastballs provide incoming kinetic energy that can boost exit velocity when squared up, whereas breaking and offspeed pitches disrupt timing and induce weaker launch angles.
+:::
+
+## 📈 League Visualization
+
+::: {.callout-tip appearance="minimal"}
+**Reading the Chart:** Each point below represents a batted ball in play. Notice how **Home Runs** (red) cluster tightly inside the shaded **Barrel Zone**, while **Singles** (teal) form a low-trajectory line-drive band between $5^\circ$ and $22^\circ$.
+:::
+
+```{r}
+#| fig-width: 8.5
+#| fig-height: 5.75
+#| echo: false
+#| message: false
+#| warning: false
 
 ggplot(statcast_bip, aes(x = launch_angle, y = launch_speed, color = outcome)) +
   annotate(
@@ -228,13 +604,21 @@ ggplot(statcast_bip, aes(x = launch_angle, y = launch_speed, color = outcome)) +
   )
 ```
 
----
+::: {.stat-card}
+### Key Insights from the League-Wide Batted-Ball Distribution
 
-## ⚾ Swing Analysis: Story & Exploration
+- **The Power of the Barrel Zone ($24^\circ\text{--}38^\circ$, $98+\text{ mph}$):** Notice the tight cluster of red **Home Runs** concentrated inside the shaded rectangle. Balls struck with both elite exit velocity and an optimal launch angle produce an expected slugging percentage near $2.000$, resulting in nearly all home run production in the 2025 dataset.
+- **Line Drives Drive Batting Average ($10^\circ\text{--}25^\circ$):** The teal points (**Singles**) and orange points (**Extra-Base Hits**) dominate this corridor. Line drives regularly travel over the heads of the infielders while landing in the gaps ahead of outfielders, maximizing on-base probability.
+- **The Ground Ball Trap ($< 10^\circ$):** Even when a batter makes blisteringly hard contact ($100+\text{ mph}$) into the ground, turf friction and infielder positioning limit the outcome to in-play outs or routine singles. Downward contact almost never produces extra bases.
+- **Pop-Ups and Ineffective Lift ($> 50^\circ$):** Regardless of how hard the ball is struck, balls launched at extreme upward angles hang in the air for 5+ seconds, allowing fielders to settle underneath them for routine outs ($> 98\%$ out rate).
+:::
 
-::::: {.panel-tabset}
+::: {.callout-note}
+### Takeaway for Batter Approach
+Maximizing offensive production is not simply a matter of hitting the ball hard—it requires directing kinetic energy into the **$10^\circ\text{ to }35^\circ$ launch window** where ball flight physics and field dimensions yield the greatest offensive run expectancy.
+:::
 
-### 📖 Story
+## 📖 Swing Story
 
 When Baseball Savant added Hawk-Eye bat tracking to Statcast, it revealed a swing mechanic that traditional box-score stats could never see: **Attack Angle** (`attack_angle`), the vertical direction in degrees that the bat's sweet spot is traveling at the exact moment it meets the baseball (`0°` is perfectly level with the ground, positive angles move upward, and negative angles chop downward). Across the **1,405 tracked balls in play** in our 2025 Statcast dataset featuring Aaron Judge, Bobby Witt Jr., Kyle Stowers, and Adley Rutschman, plotting every swing's attack angle against its resulting exit velocity and batted-ball outcome exposes a clear offensive "Goldilocks" zone.
 
@@ -346,7 +730,7 @@ ggplot() +
 
 The physics diagram above puts this sweet spot into context: because a pitcher releases the baseball from an elevated mound, nearly every fastball and breaking ball crosses home plate moving **downward at `6°` to `10°`**. A hitter whose barrel rises at **`10°` to `20°`** meets that descending pitch nearly head-on, keeping the sweet spot aligned with the ball's path across a wider timing window instead of grazing it at a single point. That explains the distinct player archetypes in our dataset: power hitters **Aaron Judge (`11.0°` average attack angle, `.583` wOBA)** and **Kyle Stowers (`10.0°`, `.518` wOBA)** live right at the front door of the `10°–20°` damage zone, while **Bobby Witt Jr. (`5.2°`, `.422` wOBA)** intentionally trades loft (`4.6%` home runs per ball in play) for a flatter line-drive stroke that lets his elite bat speed (`74.6 mph`) and sprint speed turn hard grounders and low liners into extra bases.
 
-### 🔍 Exploration
+## 🔍 Player Exploration
 
 Use the dropdown menu below to inspect real **2025 Statcast swing outcomes** exported from Baseball Savant for four featured hitters: **Kyle Stowers**, **Adley Rutschman**, **Aaron Judge**, and **Bobby Witt Jr.**
 
@@ -403,336 +787,58 @@ plot_player_2025 <- \(df, p_name) {
     )
 }
 
-player_bio_stats <- statcast_bip |>
-  group_by(player_id) |>
-  summarise(
-    bat_spd = paste0(round(mean(bat_speed, na.rm = TRUE), 1), " mph"),
-    swing_len = paste0(round(mean(swing_length, na.rm = TRUE), 1), " ft"),
-    attack_deg = round(mean(attack_angle, na.rm = TRUE), 0),
-    tilt_deg = round(mean(swing_path_tilt, na.rm = TRUE), 0),
-    .groups = "drop"
-  ) |>
-  split(~player_id)
-
-plot_savant_biomechanics <- \(p_id) {
-  real_bio <- player_bio_stats[[p_id]]
-  specs <- list(
-    stowers = list(
-      name = "Kyle Stowers (LHB)", accent = "#00A3E0", secondary = "#EF3340",
-      side = "L", stance_label = "14° Open • 29\" Wide",
-      back_x = 22, back_y = -13, front_x = 26.5, front_y = 14,
-      contact_x = 1.5, contact_y = 11.5,
-      start_deg = 68, attack_deg = real_bio$attack_deg, tilt_deg = real_bio$tilt_deg,
-      bat_spd = real_bio$bat_spd, swing_len = real_bio$swing_len
-    ),
-    rutschman = list(
-      name = "Adley Rutschman (S/R — LHB View)", accent = "#BD3039", secondary = "#0C2340",
-      side = "L", stance_label = "8° Open • 31\" Wide",
-      back_x = 22, back_y = -14.5, front_x = 24.5, front_y = 15,
-      contact_x = 1.0, contact_y = 7.5,
-      start_deg = 48, attack_deg = real_bio$attack_deg, tilt_deg = real_bio$tilt_deg,
-      bat_spd = real_bio$bat_spd, swing_len = real_bio$swing_len
-    ),
-    judge = list(
-      name = "Aaron Judge (RHB)", accent = "#0C2340", secondary = "#e63946",
-      side = "R", stance_label = "5° Closed • 33\" Wide",
-      back_x = -24, back_y = -15, front_x = -22, front_y = 16.5,
-      contact_x = -1.5, contact_y = 13.5,
-      start_deg = 78, attack_deg = real_bio$attack_deg, tilt_deg = real_bio$tilt_deg,
-      bat_spd = real_bio$bat_spd, swing_len = real_bio$swing_len
-    ),
-    witt = list(
-      name = "Bobby Witt Jr. (RHB)", accent = "#004687", secondary = "#BD9B60",
-      side = "R", stance_label = "18° Open • 30\" Wide",
-      back_x = -21.5, back_y = -13.5, front_x = -27, front_y = 14.5,
-      contact_x = -1.5, contact_y = 9.5,
-      start_deg = 55, attack_deg = real_bio$attack_deg, tilt_deg = real_bio$tilt_deg,
-      bat_spd = real_bio$bat_spd, swing_len = real_bio$swing_len
-    )
+render_savant_swing_video <- \(p_id) {
+  cfg <- list(
+    stowers   = list(mlb_id = 669065, side = "L", switch = FALSE, preload = "auto"),
+    rutschman = list(mlb_id = 668939, side = "L", switch = TRUE,  preload = "metadata"),
+    judge     = list(mlb_id = 592450, side = "R", switch = FALSE, preload = "metadata"),
+    witt      = list(mlb_id = 677951, side = "R", switch = FALSE, preload = "metadata")
   )[[p_id]]
 
-  # --- Left Canvas (x around -44 to 44): Top-Down Batter's Box & Stance ---
-  plate_top <- tibble(
-    x = c(-8.5, 8.5, 8.5, 0, -8.5, -8.5),
-    y = c(4, 4, -4.5, -13, -4.5, 4)
-  )
-  l_box <- tibble(x = c(14, 40, 40, 14, 14), y = c(-26, -26, 26, 26, -26))
-  r_box <- tibble(x = c(-14, -40, -40, -14, -14), y = c(-26, -26, 26, 26, -26))
+  base_url <- "https://builds.mlbstatic.com/baseballsavant.mlb.com/swing-path/splendid-splinter"
+  mp4_url  <- sprintf("%s/cut/%d-2025-%s.mp4", base_url, cfg$mlb_id, cfg$side)
+  png_url  <- sprintf("%s/posterized/%d-2025-%s.png", base_url, cfg$mlb_id, cfg$side)
 
-  # Batter overhead torso, helmet (facing plate & pitcher), and hands
-  mid_foot_x <- (specs$back_x + specs$front_x) / 2
-  mid_foot_y <- (specs$back_y + specs$front_y) / 2
-  ang_seq <- seq(0, 2 * pi, length.out = 50)
-
-  # Cleat direction (pointing inward toward home plate x = 0)
-  toe_dir <- if (specs$side == "L") -4.8 else 4.8
-
-  # Hands move along a compact inner arc while the barrel sweeps a wide outer swath across the entire plate
-  t_seq <- seq(0, 1, length.out = 60)
-  # dir points from the batter's box toward home plate (-1 for LHB on right, +1 for RHB on left)
-  dir <- if (specs$side == "L") -1 else 1
-
-  # Hand path from launch (near back shoulder) -> through hitting zone -> follow-through
-  h0_x <- -dir * 17.5
-  h0_y <- -4.0
-  hc_x <- -dir * 10.5
-  hc_y <- 2.0
-  h1_x <- -dir * 14.5
-  h1_y <- 8.0
-
-  hand_x_arc <- (1 - t_seq)^2 * h0_x + 2 * (1 - t_seq) * t_seq * hc_x + t_seq^2 * h1_x
-  hand_y_arc <- (1 - t_seq)^2 * h0_y + 2 * (1 - t_seq) * t_seq * hc_y + t_seq^2 * h1_y
-
-  # Plate-relative bat angle phi: 0 rad = perpendicular across plate; -58 deg (launch) to +54 deg (follow-through)
-  phi_start <- -58 * pi / 180
-  phi_end   <-  54 * pi / 180
-
-  # Find the swing parameter t_cont where the barrel aligns with the player's contact point (contact_x, contact_y)
-  t_cont <- (specs$contact_y - 1.0) / 15.0
-  t_cont <- min(max(t_cont, 0.56), 0.78)
-  hx_cont <- (1 - t_cont)^2 * h0_x + 2 * (1 - t_cont) * t_cont * hc_x + t_cont^2 * h1_x
-  hy_cont <- (1 - t_cont)^2 * h0_y + 2 * (1 - t_cont) * t_cont * hc_y + t_cont^2 * h1_y
-  phi_cont <- atan2(specs$contact_y - hy_cont, dir * (specs$contact_x - hx_cont))
-  r_sweet <- sqrt((specs$contact_x - hx_cont)^2 + (specs$contact_y - hy_cont)^2)
-
-  # Smooth angle sweep passing through phi_cont at t = t_cont
-  phi_mid <- (phi_cont - (1 - t_cont)^2 * phi_start - t_cont^2 * phi_end) / (2 * (1 - t_cont) * t_cont)
-  phi_seq <- (1 - t_seq)^2 * phi_start + 2 * (1 - t_seq) * t_seq * phi_mid + t_seq^2 * phi_end
-
-  # Radial extension along bat: arms/barrel extend into the hitting zone so barrel covers the entire 17" plate width
-  ext_profile  <- 0.78 + 0.22 * sin(pi * t_seq^0.85)
-  r_barrel_in  <- 6.2 * ext_profile
-  r_barrel_out <- 24.2 * ext_profile
-  r_sweet_seq  <- r_sweet * (ext_profile / (0.78 + 0.22 * sin(pi * t_cont^0.85)))
-
-  barrel_in_x  <- hand_x_arc + dir * r_barrel_in * cos(phi_seq)
-  barrel_in_y  <- hand_y_arc + r_barrel_in * sin(phi_seq)
-  barrel_out_x <- hand_x_arc + dir * r_barrel_out * cos(phi_seq)
-  barrel_out_y <- hand_y_arc + r_barrel_out * sin(phi_seq)
-  sweet_x      <- hand_x_arc + dir * r_sweet_seq * cos(phi_seq)
-  sweet_y      <- hand_y_arc + r_sweet_seq * sin(phi_seq)
-
-  # Polygon for full area covered by the barrel (and lighter inner handle sweep)
-  top_barrel_poly <- tibble(
-    x = c(barrel_in_x, rev(barrel_out_x)),
-    y = c(barrel_in_y, rev(barrel_out_y))
-  )
-  top_handle_poly <- tibble(
-    x = c(hand_x_arc, rev(barrel_in_x)),
-    y = c(hand_y_arc, rev(barrel_in_y))
-  )
-  top_arc <- tibble(x = sweet_x, y = sweet_y)
-  top_outer_arc <- tibble(x = barrel_out_x, y = barrel_out_y)
-  top_inner_arc <- tibble(x = barrel_in_x, y = barrel_in_y)
-
-  # Full bat at point of contact (handle + thicker barrel extending across entire plate to barrel tip)
-  r_in_c  <- 6.2 * (0.78 + 0.22 * sin(pi * t_cont^0.85))
-  r_out_c <- 24.2 * (0.78 + 0.22 * sin(pi * t_cont^0.85))
-  hand_contact_x <- hx_cont
-  hand_contact_y <- hy_cont
-  brl_in_cont_x  <- hx_cont + dir * r_in_c * cos(phi_cont)
-  brl_in_cont_y  <- hy_cont + r_in_c * sin(phi_cont)
-  brl_out_cont_x <- hx_cont + dir * r_out_c * cos(phi_cont)
-  brl_out_cont_y <- hy_cont + r_out_c * sin(phi_cont)
-
-  head_x <- if (specs$side == "L") mid_foot_x - 2.0 else mid_foot_x + 2.0
-  head_y <- mid_foot_y + 1.5
-  head_top <- tibble(
-    x = head_x + 3.4 * cos(ang_seq),
-    y = head_y + 3.4 * sin(ang_seq)
-  )
-  # Helmet brim pointing toward pitcher (+y)
-  brim_x <- head_x
-  brim_y <- head_y + 4.8
-
-  # --- Right Canvas (shifted +98 on x): Side View Across Plate (Batter Chest Facing Plate, Looking Right at Pitcher) ---
-  cx <- 98
-  sz_box <- tibble(x = cx + c(-8.5, 8.5, 8.5, -8.5, -8.5), y = c(-6, -6, 14, 14, -6))
-  side_plate <- tibble(x = cx + c(-8.5, 8.5, 6, -6, -8.5), y = c(-18.5, -18.5, -20.5, -20.5, -18.5))
-
-  # Batter stands sideways to pitcher (chest facing plate/viewer): back foot on left, front foot on right
-  back_foot_sx <- cx - 11
-  front_foot_sx <- cx + 6
-  hip_y <- -5.5
-  shldr_y <- if (p_id == "judge") 11.5 else 9.8
-  head_sx <- cx - 2.0
-  head_sy <- shldr_y + 4.8
-
-  torso_side <- tibble(
-    x = c(cx - 6.5, cx + 2.5, cx + 4.0, cx - 8.0, cx - 6.5),
-    y = c(hip_y, hip_y, shldr_y, shldr_y, hip_y)
-  )
-  head_side <- tibble(
-    x = head_sx + 3.2 * cos(ang_seq),
-    y = head_sy + 3.4 * sin(ang_seq)
-  )
-
-  # Hands in setup (held behind back shoulder on left) holding bat at Starting Bat Angle
-  hx <- cx - 9.5
-  hy <- shldr_y + 1.8
-  bat_len <- 14.5
-  bat_in_len <- 6.5
-  bat_sweet_len <- 11.0
-  rad_start <- specs$start_deg * pi / 180
-  bat_tip_x <- hx - bat_len * cos(rad_start)
-  bat_tip_y <- hy + bat_len * sin(rad_start)
-  bat_in_x <- hx - bat_in_len * cos(rad_start)
-  bat_in_y <- hy + bat_in_len * sin(rad_start)
-  bat_sweet_x <- hx - bat_sweet_len * cos(rad_start)
-  bat_sweet_y <- hy + bat_sweet_len * sin(rad_start)
-
-  # Side-view swing path: barrel drops from setup into zone and sweeps upward at Attack Angle
-  imp_x <- cx + 9.5
-  imp_y <- 2.0
-  rad_att <- specs$attack_deg * pi / 180
-  follow_x <- imp_x + 14 * cos(rad_att)
-  follow_y <- imp_y + 14 * sin(rad_att)
-
-  # Smooth curve from setup -> lag slot behind plate -> impact point, then along attack angle
-  t1 <- seq(0, 1, length.out = 45)
-  t2 <- seq(0, 1, length.out = 20)[-1]
-
-  # Sweet-spot centerline curve
-  ctrl_sx <- cx - 8.5
-  ctrl_sy <- -6.0
-  sc_x <- c((1 - t1)^2 * bat_sweet_x + 2 * (1 - t1) * t1 * ctrl_sx + t1^2 * imp_x,
-            imp_x + t2 * (follow_x - imp_x))
-  sc_y <- c((1 - t1)^2 * bat_sweet_y + 2 * (1 - t1) * t1 * ctrl_sy + t1^2 * imp_y,
-            imp_y + t2 * (follow_y - imp_y))
-  side_curve <- tibble(x = sc_x, y = sc_y)
-
-  # Outer barrel-tip boundary and inner-barrel boundary sweeping the full side-view barrel zone
-  out_x <- c((1 - t1)^2 * bat_tip_x + 2 * (1 - t1) * t1 * (ctrl_sx - 3.2) + t1^2 * (imp_x + 1.5),
-             (imp_x + 1.5) + t2 * (follow_x - imp_x))
-  out_y <- c((1 - t1)^2 * bat_tip_y + 2 * (1 - t1) * t1 * (ctrl_sy - 3.2) + t1^2 * (imp_y - 2.8),
-             (imp_y - 2.8) + t2 * (follow_y - imp_y))
-
-  in_x <- c((1 - t1)^2 * bat_in_x + 2 * (1 - t1) * t1 * (ctrl_sx + 2.8) + t1^2 * (imp_x - 1.5),
-            (imp_x - 1.5) + t2 * (follow_x - imp_x))
-  in_y <- c((1 - t1)^2 * bat_in_y + 2 * (1 - t1) * t1 * (ctrl_sy + 2.8) + t1^2 * (imp_y + 2.6),
-            (imp_y + 2.6) + t2 * (follow_y - imp_y))
-
-  side_barrel_poly <- tibble(
-    x = c(in_x, rev(out_x)),
-    y = c(in_y, rev(out_y))
-  )
-  side_outer_arc <- tibble(x = out_x, y = out_y)
-  side_inner_arc <- tibble(x = in_x, y = in_y)
-
-  ggplot() +
-    # Panel backgrounds
-    annotate("rect", xmin = -44, xmax = 44, ymin = -32, ymax = 34, fill = "#ffffff", color = "gray80", linewidth = 0.5) +
-    annotate("rect", xmin = 54, xmax = 148, ymin = -32, ymax = 34, fill = "#ffffff", color = "gray80", linewidth = 0.5) +
-    # Panel headers
-    annotate("text", x = 0, y = 30.8, label = "OVERHEAD VIEW: STANCE & BARREL COVERAGE ZONE", fontface = "bold", size = 3.0, color = "#1d3557") +
-    annotate("text", x = 101, y = 30.8, label = "SIDE VIEW (PITCHER ON RIGHT): BARREL PATH & ATTACK ANGLE", fontface = "bold", size = 2.95, color = "#1d3557") +
-    # --- Overhead elements ---
-    geom_path(data = l_box, aes(x, y), color = "gray82", linetype = "dashed", linewidth = 0.6) +
-    geom_path(data = r_box, aes(x, y), color = "gray82", linetype = "dashed", linewidth = 0.6) +
-    geom_polygon(data = plate_top, aes(x, y), fill = "#f8f9fa", color = "#1d3557", linewidth = 0.9) +
-    annotate("text", x = 0, y = -2, label = "HOME\nPLATE", size = 2.1, fontface = "bold", color = "gray40") +
-    # Shaded handle sweep & full Barrel Coverage Zone across home plate
-    geom_polygon(data = top_handle_poly, aes(x, y), fill = specs$accent, alpha = 0.10) +
-    geom_polygon(data = top_barrel_poly, aes(x, y), fill = specs$secondary, alpha = 0.24) +
-    geom_path(data = top_outer_arc, aes(x, y), color = specs$secondary, linewidth = 0.8, alpha = 0.65) +
-    geom_path(data = top_inner_arc, aes(x, y), color = specs$secondary, linewidth = 0.7, alpha = 0.45, linetype = "dotted") +
-    annotate("segment", x = 0, y = 25.5, xend = 0, yend = 17, arrow = arrow(length = unit(0.20, "cm"), type = "closed"), color = "#e63946", linewidth = 0.9) +
-    annotate("text", x = 0, y = 27.6, label = "PITCHER (Incoming Pitch)", size = 2.5, color = "#e63946", fontface = "bold") +
-    annotate("text", x = 0, y = -16.5, label = "CATCHER", size = 2.2, color = "gray50", fontface = "bold") +
-    # Faint Overhead Batter Outline (Shoulders, Helmet facing Pitcher, Cleats facing Plate)
-    annotate("segment", x = specs$back_x, y = specs$back_y, xend = specs$front_x, yend = specs$front_y,
-             color = specs$accent, alpha = 0.16, linewidth = 7.5, lineend = "round") +
-    geom_polygon(data = head_top, aes(x, y), fill = specs$accent, alpha = 0.25, color = specs$accent, linewidth = 0.5) +
-    annotate("segment", x = head_x, y = head_y, xend = brim_x, yend = brim_y,
-             color = specs$accent, alpha = 0.65, linewidth = 2.2, arrow = arrow(length = unit(0.14, "cm"))) +
-    # Cleats pointing inward toward Home Plate + Stance line
-    annotate("segment", x = specs$back_x, y = specs$back_y, xend = specs$front_x, yend = specs$front_y,
-             color = specs$accent, linetype = "dotted", linewidth = 0.9) +
-    annotate("segment", x = specs$back_x, y = specs$back_y, xend = specs$back_x + toe_dir, yend = specs$back_y,
-             color = specs$accent, linewidth = 3.2, lineend = "round") +
-    annotate("segment", x = specs$front_x, y = specs$front_y, xend = specs$front_x + toe_dir, yend = specs$front_y,
-             color = specs$accent, linewidth = 3.2, lineend = "round") +
-    annotate("point", x = c(specs$back_x, specs$front_x), y = c(specs$back_y, specs$front_y),
-             size = 4.5, shape = 21, fill = specs$accent, color = "white", stroke = 1.1) +
-    annotate("text", x = specs$back_x, y = specs$back_y - 4.2, label = "Back Foot", size = 2.5, fontface = "bold", color = specs$accent) +
-    annotate("text", x = specs$front_x, y = specs$front_y + 4.2, label = "Front Foot", size = 2.5, fontface = "bold", color = specs$accent) +
-    # Top-down sweet-spot path & full-length Bat (handle + thick barrel) crossing Home Plate at contact
-    geom_path(data = top_arc, aes(x, y), color = specs$secondary, linewidth = 1.2, linetype = "dashed") +
-    annotate("segment", x = hand_contact_x, y = hand_contact_y,
-             xend = brl_in_cont_x, yend = brl_in_cont_y,
-             color = "#457b9d", linewidth = 1.8, lineend = "round") +
-    annotate("segment", x = brl_in_cont_x, y = brl_in_cont_y,
-             xend = brl_out_cont_x, yend = brl_out_cont_y,
-             color = "#1d3557", linewidth = 3.6, lineend = "round") +
-    annotate("point", x = specs$contact_x, y = specs$contact_y, size = 4.2, shape = 21, fill = "#ffb703", color = "#1d3557", stroke = 1.1) +
-    annotate("label", x = 0, y = -26.5,
-             label = paste0("Stance: ", specs$stance_label, "  |  Contact: +", specs$contact_y, "\" in front of plate"),
-             size = 2.7, fontface = "bold", fill = "#f8f9fa", color = "#1d3557", label.size = 0.25) +
-    # --- Side-View elements (Batter chest facing plate, looking RIGHT toward Pitcher) ---
-    # Faint Batter Silhouette (Back Leg, Front Leg, Torso, Helmet Looking Right, Both Arms to Hands)
-    annotate("segment", x = back_foot_sx, y = -18.5, xend = cx - 5.2, yend = hip_y,
-             color = specs$accent, alpha = 0.22, linewidth = 3.8, lineend = "round") +
-    annotate("segment", x = front_foot_sx, y = -18.5, xend = cx + 1.5, yend = hip_y,
-             color = specs$accent, alpha = 0.22, linewidth = 3.8, lineend = "round") +
-    geom_polygon(data = torso_side, aes(x, y), fill = specs$accent, alpha = 0.16, color = specs$accent, linewidth = 0.5) +
-    geom_polygon(data = head_side, aes(x, y), fill = specs$accent, alpha = 0.22, color = specs$accent, linewidth = 0.5) +
-    # Helmet visor pointing RIGHT toward pitcher
-    annotate("segment", x = head_sx + 2, y = head_sy + 1.0, xend = head_sx + 5.8, yend = head_sy + 0.8,
-             color = specs$accent, alpha = 0.50, linewidth = 2.2, lineend = "round") +
-    # Lead arm & back arm reaching to setup hands
-    annotate("segment", x = cx + 3.0, y = shldr_y - 1.0, xend = hx, yend = hy,
-             color = specs$accent, alpha = 0.26, linewidth = 2.6, lineend = "round") +
-    annotate("segment", x = cx - 7.5, y = shldr_y - 1.0, xend = hx, yend = hy,
-             color = specs$accent, alpha = 0.26, linewidth = 2.6, lineend = "round") +
-    # Strike zone & Home plate
-    geom_polygon(data = sz_box, aes(x, y), fill = "#f1faee", alpha = 0.35, color = "gray55", linetype = "dashed") +
-    annotate("text", x = cx + 0.5, y = -3.8, label = "STRIKE ZONE", size = 2.2, color = "gray45", fontface = "bold") +
-    geom_polygon(data = side_plate, aes(x, y), fill = "white", color = "#1d3557", linewidth = 0.8) +
-    annotate("text", x = cx, y = -22.2, label = "Home Plate", size = 2.3, color = "gray45", fontface = "italic") +
-    # Side-view shaded Barrel Sweep Zone through the hitting zone
-    geom_polygon(data = side_barrel_poly, aes(x, y), fill = specs$accent, alpha = 0.22) +
-    geom_path(data = side_outer_arc, aes(x, y), color = specs$accent, linewidth = 0.8, alpha = 0.65) +
-    geom_path(data = side_inner_arc, aes(x, y), color = specs$accent, linewidth = 0.7, alpha = 0.45, linetype = "dotted") +
-    # Incoming Pitch Arrow from Pitcher on Right (placed cleanly in lower-right of zone)
-    annotate("segment", x = 145, y = -2.5, xend = imp_x + 3.5, yend = imp_y - 0.5,
-             color = "#e63946", linetype = "dotted", linewidth = 0.9,
-             arrow = arrow(length = unit(0.18, "cm"), type = "closed")) +
-    annotate("text", x = 132, y = -5.5, label = "⬅ Incoming Pitch", size = 2.4, fontface = "bold", color = "#e63946") +
-    # Horizontal reference at hands & Starting Bat (handle + thick barrel)
-    annotate("segment", x = hx - 12, y = hy, xend = hx + 3, yend = hy, color = "gray60", linetype = "dotted") +
-    annotate("segment", x = hx, y = hy, xend = bat_in_x, yend = bat_in_y,
-             color = "#457b9d", linewidth = 1.8, lineend = "round") +
-    annotate("segment", x = bat_in_x, y = bat_in_y, xend = bat_tip_x, yend = bat_tip_y,
-             color = "#1d3557", linewidth = 3.5, lineend = "round") +
-    annotate("point", x = hx, y = hy, size = 3.6, color = specs$accent) +
-    annotate("label", x = hx - 14.5, y = hy - 5.2,
-             label = paste0("Start Bat: ", specs$start_deg, "°"),
-             size = 2.55, fontface = "bold", fill = "#ffffff", color = "#1d3557", label.size = 0.25) +
-    # Swing path sweet-spot centerline sweeping forward into impact + Attack Angle vector
-    geom_path(data = side_curve, aes(x, y), color = specs$accent, linewidth = 1.3, linetype = "dashed") +
-    annotate("segment", x = imp_x - 5, y = imp_y, xend = imp_x + 13, yend = imp_y,
-             color = "gray55", linetype = "dashed", linewidth = 0.6) +
-    annotate("segment", x = imp_x, y = imp_y, xend = follow_x, yend = follow_y,
-             color = specs$secondary, linewidth = 1.8,
-             arrow = arrow(length = unit(0.24, "cm"), type = "closed")) +
-    annotate("point", x = imp_x, y = imp_y, size = 4.2, shape = 21, fill = "#ffb703", color = "#1d3557", stroke = 1.1) +
-    annotate("label", x = imp_x + 17, y = imp_y + 11.5,
-             label = paste0("Attack Angle: +", specs$attack_deg, "°\nSwing Tilt: ", specs$tilt_deg, "°"),
-             size = 2.55, fontface = "bold", fill = "#ffffff", color = specs$secondary, label.size = 0.25) +
-    annotate("label", x = 101, y = -26.5,
-             label = paste0("Bat Speed: ", specs$bat_spd, "  |  Swing Length: ", specs$swing_len),
-             size = 2.7, fontface = "bold", fill = "#f8f9fa", color = "#1d3557", label.size = 0.25) +
-    coord_fixed(xlim = c(-45, 149), ylim = c(-33, 35), expand = FALSE) +
-    labs(
-      title = paste0("Baseball Savant Stance & Swing Path Visual — ", specs$name),
-      subtitle = "Left: Overhead batter's box (Pitcher at top)  •  Right: Side view at plate facing Pitcher on right"
-    ) +
-    theme_void(base_size = 11) +
-    theme(
-      plot.title = element_text(face = "bold", size = 13, color = "#1d3557", margin = margin(b = 3)),
-      plot.subtitle = element_text(size = 9.5, color = "gray35", margin = margin(b = 8)),
-      plot.margin = margin(6, 6, 6, 6)
+  side_btns <- if (cfg$switch) {
+    sprintf(
+      '<button type="button" id="side-L-%s" class="savant-btn active-side" onclick="setSavantSide(\'%s\', %d, \'L\')">LHB</button><button type="button" id="side-R-%s" class="savant-btn" onclick="setSavantSide(\'%s\', %d, \'R\')">RHB</button>',
+      p_id, p_id, cfg$mlb_id, p_id, p_id, cfg$mlb_id
     )
+  } else {
+    ""
+  }
+
+  cat(sprintf('\n```{=html}\n<div class="savant-viz-wrapper">
+  <div class="savant-video-stage" onclick="toggleSavantVideo(\'%s\', event)">
+    <video id="savant-vid-%s" muted playsinline loop preload="%s" poster="%s">
+      <source id="savant-src-%s" src="%s" type="video/mp4">
+    </video>
+    <div class="savant-right-hotspots">
+      <div class="savant-hotspot" title="Jump to Attack Angle breakdown" onclick="jumpSavantMetric(\'%s\', 10.0, event)"></div>
+      <div class="savant-hotspot" title="Jump to Attack Direction breakdown" onclick="jumpSavantMetric(\'%s\', 12.3, event)"></div>
+      <div class="savant-hotspot" title="Jump to Swing Path Tilt breakdown" onclick="jumpSavantMetric(\'%s\', 16.88, event)"></div>
+    </div>
+  </div>
+  <div class="savant-controls-bar">
+    <div class="savant-btn-group">
+      <button type="button" id="play-btn-%s" class="savant-btn" onclick="toggleSavantVideo(\'%s\', event)">▶ Play</button>
+      <button type="button" class="savant-btn" onclick="replaySavantVideo(\'%s\')">⏪ Replay</button>
+      %s
+    </div>
+    <input type="range" id="scrub-%s" class="savant-scrub" min="0" max="1000" value="0" oninput="scrubSavantVideo(\'%s\', this.value)">
+    <div class="savant-btn-group">
+      <button type="button" class="savant-btn" onclick="jumpSavantMetric(\'%s\', 10.0, event)">Attack Angle</button>
+      <button type="button" class="savant-btn" onclick="jumpSavantMetric(\'%s\', 12.3, event)">Attack Dir</button>
+      <button type="button" class="savant-btn" onclick="jumpSavantMetric(\'%s\', 16.88, event)">Swing Tilt</button>
+    </div>
+  </div>
+</div>\n```\n',
+    p_id, p_id, cfg$preload, png_url, p_id, mp4_url,
+    p_id, p_id, p_id,
+    p_id, p_id, p_id, side_btns,
+    p_id, p_id,
+    p_id, p_id, p_id
+  ))
 }
 ```
 
@@ -741,7 +847,7 @@ plot_savant_biomechanics <- \(p_id) {
   <label for="player-select">⚾ Select a Hitter (2025 Season):</label>
   <select id="player-select" class="player-select-dropdown" onchange="switchPlayer(this.value)">
     <option value="stowers" selected>Kyle Stowers (MIA • OF)</option>
-    <option value="rutschman">Adley Rutschman (BOS • C)</option>
+    <option value="rutschman">Adley Rutschman (BAL • C)</option>
     <option value="judge">Aaron Judge (NYY • OF)</option>
     <option value="witt">Bobby Witt Jr. (KC • SS)</option>
   </select>
@@ -768,13 +874,12 @@ plot_player_2025(df_s, "Kyle Stowers (MIA)")
 **Baseball Savant Stance & Bat-Path Breakdown — Kyle Stowers (`L/L`)**
 
 - **Stance & Starting Bat Angle:** Sets up in a tall, slightly open left-handed stance ($\sim 14^\circ$ open) with his hands held high near the back shoulder. His bat starts at a steep vertical angle ($\sim 68^\circ$ above horizontal) with a subtle barrel tip toward the pitcher during his stride load, creating natural loft leverage.
-- **Bat Path & Attack Angle:** Features a pronounced upward **Attack Angle** of $\sim 15^\circ\text{--}17^\circ$ and a steep **Swing Path Tilt** ($\sim 37^\circ$). Because his **Swing Length** is relatively long ($\sim 7.7\text{ ft}$), he generates elite fly-ball carry and pull-side barrels ($\sim 74.2\text{ mph}$ avg bat speed, $42\%$ Fast-Swing rate), though the steeper path leaves a larger window against high-spin elevated four-seam fastballs.
+- **Bat Path & Attack Angle:** Features an **Attack Angle** of **$10^\circ$** ($10.0^\circ$ on BIP, $10.6^\circ$ overall), an **Attack Direction** of **$+2.0^\circ$** (pull side), and a **Swing Path Tilt** of **$34.2^\circ$**. With a compact **Swing Length** of **$6.7\text{ ft}$** ($6.63\text{ ft}$ overall) and **$74.9\text{ mph}$** avg bat speed on contact ($73.0\text{ mph}$ overall, $25$ HRs), he matches the downward pitch plane flush to generate strong pull-side barrels and extra-base power.
 :::
 
 ```{r}
-#| fig-width: 8.5
-#| fig-height: 3.6
-plot_savant_biomechanics("stowers")
+#| results: asis
+render_savant_swing_video("stowers")
 ```
 ::::
 
@@ -783,7 +888,7 @@ plot_savant_biomechanics("stowers")
 #| results: asis
 df_r <- players_2025 |> filter(player_id == "rutschman")
 cat(sprintf(
-  '<div class="stat-card"><strong>Adley Rutschman — Boston Red Sox (2025 Scouting Profile):</strong> %s</div>',
+  '<div class="stat-card"><strong>Adley Rutschman — Baltimore Orioles (2025 Scouting Profile):</strong> %s</div>',
   unique(df_r$profile_note)
 ))
 ```
@@ -791,20 +896,19 @@ cat(sprintf(
 ```{r}
 #| fig-width: 8.5
 #| fig-height: 4.8
-plot_player_2025(df_r, "Adley Rutschman (BOS)")
+plot_player_2025(df_r, "Adley Rutschman (BAL)")
 ```
 
 ::: {.stat-card}
 **Baseball Savant Stance & Bat-Path Breakdown — Adley Rutschman (`S/R`)**
 
 - **Stance & Starting Bat Angle:** As a switch-hitter, Rutschman uses a balanced, slightly wider base ($\sim 31\text{ in.}$ stance width) from both sides of the plate, staying slightly more open from the left side than the right. He starts with his bat resting at a relaxed, flatter setup angle ($\sim 45^\circ\text{--}50^\circ$) over his back shoulder, minimizing pre-pitch movement so his head stays still through pitch recognition.
-- **Bat Path & Attack Angle:** Prioritizes a compact **Swing Length** ($\sim 7.0\text{ ft}$) and a flatter, line-drive **Attack Angle** ($\sim 9^\circ\text{--}11^\circ$) that stays on plane through the hitting zone for a long time. While his average bat speed ($\sim 71.4\text{ mph}$) is moderate, his **Squared-Up Rate** ($\sim 31\%$, top-decile on Baseball Savant) allows him to convert a high share of swings into hard line-drive singles and gap doubles.
+- **Bat Path & Attack Angle:** Features an **Attack Angle** of **$8.6^\circ$** ($8^\circ$ in Savant 3D breakdown; $7^\circ$ RHB, $8.7^\circ$ overall), an **Attack Direction** of **$-0.5^\circ$** (centered spray), and a **Swing Path Tilt** of **$35.2^\circ$**. With a compact **Swing Length** of **$6.9\text{ ft}$** ($6.82\text{ ft}$ overall) and **$69.8\text{ mph}$** avg bat speed on contact ($68.1\text{ mph}$ overall, $12$ HRs), his path stays in the hitting zone exceptionally long for consistent line drives.
 :::
 
 ```{r}
-#| fig-width: 8.5
-#| fig-height: 3.6
-plot_savant_biomechanics("rutschman")
+#| results: asis
+render_savant_swing_video("rutschman")
 ```
 ::::
 
@@ -828,13 +932,12 @@ plot_player_2025(df_j, "Aaron Judge (NYY)")
 **Baseball Savant Stance & Bat-Path Breakdown — Aaron Judge (`R/R`)**
 
 - **Stance & Starting Bat Angle:** At $6'7''$, Judge uses a slightly closed-to-neutral stance ($\sim 5^\circ$ closed) with a controlled two-strike toe-tap gather. His bat begins nearly vertical ($\sim 75^\circ\text{--}80^\circ$ starting bat angle) high above his rear shoulder, allowing gravity and torso rotation to accelerate the barrel into the zone without over-striding.
-- **Bat Path & Attack Angle:** Combines $99\text{th}$-percentile **Bat Speed** ($\sim 77.4\text{ mph}$, $>70\%$ Fast-Swing rate) with an **Attack Angle** of $\sim 14^\circ\text{--}16^\circ$ and a steep **Swing Path Tilt** ($\sim 38^\circ$) tailored to lift pitches at the knees. Even with a longer **Swing Length** ($\sim 8.1\text{ ft}$), his elite **Blast Rate** ($>22\%$) produces Statcast-leading barrel rates ($>25\%$) and exit velocities regularly topping $115\text{ mph}$.
+- **Bat Path & Attack Angle:** Features an **Attack Angle** of **$11.0^\circ$** on contact ($14^\circ$ in Savant 3D tracking breakdown; $13.6^\circ$ overall), an **Attack Direction** of **$-3.7^\circ$** (power alley to dead center), and a steep **Swing Path Tilt** of **$38.4^\circ$**. His long **Swing Length** of **$8.0\text{ ft}$** paired with elite **$76.0\text{ mph}$** avg bat speed on contact ($74.8\text{ mph}$ overall, $55$ HRs, $95.1\text{ mph}$ avg exit velocity) produces league-leading barrel rates.
 :::
 
 ```{r}
-#| fig-width: 8.5
-#| fig-height: 3.6
-plot_savant_biomechanics("judge")
+#| results: asis
+render_savant_swing_video("judge")
 ```
 ::::
 
@@ -858,13 +961,12 @@ plot_player_2025(df_w, "Bobby Witt Jr. (KC)")
 **Baseball Savant Stance & Bat-Path Breakdown — Bobby Witt Jr. (`R/R`)**
 
 - **Stance & Starting Bat Angle:** Sets up in an athletic, slightly crouched and open stance ($\sim 18^\circ$ open) with his hands positioned near chest height. His bat starts at a medium-angled wrap ($\sim 55^\circ$ starting angle, tilted slightly behind his helmet) before firing with one of the quickest rotational hip-to-shoulder separations in MLB.
-- **Bat Path & Attack Angle:** Generates elite **Bat Speed** ($\sim 75.6\text{ mph}$) while maintaining a remarkably direct **Swing Length** ($\sim 7.3\text{ ft}$) and a flatter **Attack Angle** ($\sim 8^\circ\text{--}11^\circ$). Because his barrel enters the zone early and stays level through contact, he sprays $100+\text{ mph}$ line drives to all fields—driving a rare combination of high batting average, doubles, triples, and $30+$ home run power.
+- **Bat Path & Attack Angle:** Features an exceptionally flat **Attack Angle** of **$5.2^\circ$** on contact ($5^\circ$ in Savant 3D breakdown, $4.3^\circ$ overall), an **Attack Direction** of **$-0.9^\circ$**, and a noticeably flatter **Swing Path Tilt** of **$28.8^\circ$**. Paired with a direct **$7.1\text{ ft}$** Swing Length ($6.96\text{ ft}$ overall) and explosive **$74.6\text{ mph}$** avg bat speed on contact ($72.7\text{ mph}$ overall, $27$ HRs), his level barrel plane sprays high-velocity line drives to all fields.
 :::
 
 ```{r}
-#| fig-width: 8.5
-#| fig-height: 3.6
-plot_savant_biomechanics("witt")
+#| results: asis
+render_savant_swing_video("witt")
 ```
 ::::
 
@@ -872,24 +974,135 @@ plot_savant_biomechanics("witt")
 <script>
 const teamBannerColors = {
   stowers: "linear-gradient(135deg, #00A3E0 0%, #0077a8 100%)",
-  rutschman: "linear-gradient(135deg, #BD3039 0%, #0C2340 100%)",
+  rutschman: "linear-gradient(135deg, #DF4601 0%, #000000 100%)",
   judge: "linear-gradient(135deg, #0C2340 0%, #1f3a60 100%)",
   witt: "linear-gradient(135deg, #004687 0%, #BD9B60 100%)"
 };
 
+function syncPlayBtn(pId) {
+  const vid = document.getElementById('savant-vid-' + pId);
+  const btn = document.getElementById('play-btn-' + pId);
+  if (vid && btn) {
+    btn.textContent = vid.paused ? '▶ Play' : '⏸ Pause';
+  }
+}
+
+function toggleSavantVideo(pId, evt) {
+  if (evt) evt.stopPropagation();
+  const vid = document.getElementById('savant-vid-' + pId);
+  if (!vid) return;
+  if (vid.paused) {
+    vid.play();
+  } else {
+    vid.pause();
+  }
+  syncPlayBtn(pId);
+}
+
+function replaySavantVideo(pId) {
+  const vid = document.getElementById('savant-vid-' + pId);
+  if (!vid) return;
+  vid.currentTime = 0;
+  vid.play();
+  syncPlayBtn(pId);
+}
+
+function jumpSavantMetric(pId, sec, evt) {
+  if (evt) evt.stopPropagation();
+  const vid = document.getElementById('savant-vid-' + pId);
+  if (!vid) return;
+  vid.pause();
+  vid.currentTime = sec;
+  syncPlayBtn(pId);
+}
+
+function scrubSavantVideo(pId, val) {
+  const vid = document.getElementById('savant-vid-' + pId);
+  if (!vid || !vid.duration) return;
+  vid.pause();
+  vid.currentTime = (Number(val) / 1000) * vid.duration;
+  syncPlayBtn(pId);
+}
+
+function setSavantSide(pId, mlbId, side) {
+  const vid = document.getElementById('savant-vid-' + pId);
+  const src = document.getElementById('savant-src-' + pId);
+  if (!vid || !src) return;
+  const base = 'https://builds.mlbstatic.com/baseballsavant.mlb.com/swing-path/splendid-splinter';
+  vid.poster = `${base}/posterized/${mlbId}-2025-${side}.png`;
+  src.src = `${base}/cut/${mlbId}-2025-${side}.mp4`;
+  document.getElementById('side-L-' + pId)?.classList.toggle('active-side', side === 'L');
+  document.getElementById('side-R-' + pId)?.classList.toggle('active-side', side === 'R');
+  vid.load();
+  vid.play();
+  syncPlayBtn(pId);
+}
+
+['stowers', 'rutschman', 'judge', 'witt'].forEach(pId => {
+  const vid = document.getElementById('savant-vid-' + pId);
+  const scrub = document.getElementById('scrub-' + pId);
+  if (vid) {
+    vid.addEventListener('timeupdate', () => {
+      if (scrub && vid.duration) {
+        scrub.value = Math.round((vid.currentTime / vid.duration) * 1000);
+      }
+    });
+    vid.addEventListener('play', () => syncPlayBtn(pId));
+    vid.addEventListener('pause', () => syncPlayBtn(pId));
+  }
+});
+
 function switchPlayer(playerId) {
   const panels = document.querySelectorAll('.player-panel');
   panels.forEach(p => p.classList.remove('active-player'));
+  document.querySelectorAll('.savant-video-stage video').forEach(v => v.pause());
   const target = document.getElementById('panel-' + playerId);
   if (target) {
     target.classList.add('active-player');
+  }
+  const activeVid = document.getElementById('savant-vid-' + playerId);
+  if (activeVid) {
+    activeVid.currentTime = 0;
+    activeVid.play().catch(() => {});
   }
   const bar = document.getElementById('selector-bar');
   if (bar && teamBannerColors[playerId]) {
     bar.style.background = teamBannerColors[playerId];
   }
 }
+
+document.addEventListener('shown.bs.tab', evt => {
+  if (evt.target && evt.target.textContent.includes('Exploration')) {
+    const sel = document.getElementById('player-select');
+    const activeVid = document.getElementById('savant-vid-' + (sel ? sel.value : 'stowers'));
+    if (activeVid && activeVid.paused) {
+      activeVid.play().catch(() => {});
+    }
+  } else {
+    document.querySelectorAll('.savant-video-stage video').forEach(v => v.pause());
+  }
+});
 </script>
 ```
 
-:::::
+## ℹ️ About
+
+::: {.stat-card}
+### About Me
+
+Hi, I'm **Ethan Katz**, a student at [New College of Florida](https://www.ncf.edu/) interested in data science, statistical modeling, and modern baseball analytics. This project was created using R, Quarto, and the tidyverse.
+
+- **Name:** Ethan Katz
+- **Email:** [e.katz30@ncf.edu](mailto:e.katz30@ncf.edu)
+- **GitHub Account:** [github.com/ekatz30-debug](https://github.com/ekatz30-debug)
+- **Final Project Repository:** [https://github.com/ekatz30-debug/mlb-swing-outcomes](https://github.com/ekatz30-debug/mlb-swing-outcomes)
+- **Institution:** [New College of Florida](https://www.ncf.edu/)
+:::
+
+::: {.stat-card}
+### Data Source
+
+All pitch-level and bat-tracking data used in this project come from Major League Baseball's Hawk-Eye optical tracking system via [Baseball Savant](https://baseballsavant.mlb.com/). Specifically, the 2025 pitch-by-pitch batted-ball dataset (`statcast_2025.csv`) was exported using [Statcast Search](https://baseballsavant.mlb.com/statcast_search), and the animated 3D swing-path and attack-angle visuals are sourced from Baseball Savant's [Bat Tracking Swing Path & Attack Angle Leaderboard](https://baseballsavant.mlb.com/leaderboard/bat-tracking/swing-path-attack-angle).
+:::
+
+:::::::
